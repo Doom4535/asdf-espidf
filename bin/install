@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Configure the environment variables
+IDF_TOOLS_PATH="$(pwd)/esp-idf"
+ASDF_DOWNLOAD_PATH="Not implemented"
+echo $ASDF_DOWNLOAD_PATH
+
+echo "$IDF_TOOLS_PATH"
+
+# Run the installer
+./esp-idf/install.sh
+
+# Source the environment
+. ./esp-idf/export.sh
