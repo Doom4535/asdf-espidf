@@ -3,13 +3,18 @@ set -euo pipefail
 
 GIT="$(which git)"
 VERSION_TAG="$1"
+#VERSION_TAG="$ASDF_INSTALL_VERSION"
+#DOWNLOAD_PATH="$ASDF_DOWNLOAD_PATH"
+DOWNLOAD_PATH="$2"
 
 # Re clone and download for each version, including any submodules (only download the minimum via depth)
 #"$GIT" clone --depth 1 --recursive --shallow-submodules -b "$VERSION_TAG" git://github.com/espressif/esp-idf.git
 #"$GIT" clone --recursive -b "$VERSION_TAG" git://github.com/espressif/esp-idf.git
 #"$GIT" clone --recursive git://github.com/espressif/esp-idf.git
+
+#"$GIT" clone git://github.com/espressif/esp-idf.git "$DOWNLOAD_PATH/esp-idf"
+cd "$DOWNLOAD_PATH"
 "$GIT" clone git://github.com/espressif/esp-idf.git
-cd esp-idf
-#"$GIT" checkout "$VERSION_TAG"
-#"$GIT" submodule update
-cd ..
+cd "esp-idf"
+"$GIT" checkout "$VERSION_TAG"
+"$GIT" submodule update

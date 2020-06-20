@@ -1,15 +1,24 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Because $ASDF_DOWNLOAD_PATH isn't getting set
+#DOWNLOAD_PATH=$(mktemp -d -t ccache_tmp_XXXXXX)
+DOWNLOAD_PATH="$(pwd)"
+
+echo "Install path: $ASDF_INSTALL_PATH"
+#echo "Download path: $ASDF_DOWNLOAD_PATH"
+echo "Download path: $DOWNLOAD_PATH"
+echo "Installing Type: $ASDF_INSTALL_TYPE"
+echo "Installing Version: $ASDF_INSTALL_VERSION"
+
+#./download "$ASDF_INSTALL_VERSION" "$DOWNLOAD_PATH"
+
+## Copy to installation location after successful build
+mv ./esp-idf "$ASDF_INSTALL_PATH"
 # Configure the environment variables
-IDF_TOOLS_PATH="$(pwd)/esp-idf"
-ASDF_DOWNLOAD_PATH="Not implemented"
-echo $ASDF_DOWNLOAD_PATH
-
+IDF_TOOLS_PATH="$ASDF_INSTALL_PATH/esp-idf"
 echo "$IDF_TOOLS_PATH"
-
 # Run the installer
-./esp-idf/install.sh
-
+"$IDF_TOOLS_PATH/install.sh"
 # Source the environment
-. ./esp-idf/export.sh
+#"$IDF_TOOLS_PATH/export.sh"
