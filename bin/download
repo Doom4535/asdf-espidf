@@ -1,20 +1,88 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-GIT="$(which git)"
-VERSION_TAG="$1"
-#VERSION_TAG="$ASDF_INSTALL_VERSION"
-#DOWNLOAD_PATH="$ASDF_DOWNLOAD_PATH"
-DOWNLOAD_PATH="$2"
+fail() {
+  echo -e "\e[31mFail:\e[m $*"
+  exit 1
+}
 
-# Re clone and download for each version, including any submodules (only download the minimum via depth)
-#"$GIT" clone --depth 1 --recursive --shallow-submodules -b "$VERSION_TAG" git://github.com/espressif/esp-idf.git
-#"$GIT" clone --recursive -b "$VERSION_TAG" git://github.com/espressif/esp-idf.git
-#"$GIT" clone --recursive git://github.com/espressif/esp-idf.git
+download() {
+  local INSTALL_TYPE="$1"
+  local INSTALL_VERSION="$2"
+  local DOWNLOAD_PATH="$3"
 
-#"$GIT" clone git://github.com/espressif/esp-idf.git "$DOWNLOAD_PATH/esp-idf"
-cd "$DOWNLOAD_PATH"
-"$GIT" clone git://github.com/espressif/esp-idf.git
-cd "esp-idf"
-"$GIT" checkout "$VERSION_TAG"
-"$GIT" submodule update
+  if [ "$INSTALL_TYPE" != "version" ]; then
+    fail "asdf-espidf currently only supports release installs"
+  elif [ "$INSTALL_TYPE" == "version" ]; then
+    echo "Downloading Release"
+    download_release "$INSTALL_VERSION" "$DOWNLOAD_PATH"
+  else
+    fail "We received a request for an invalid install type"
+  fi
+}
+
+download_release() {
+  local INSTALL_VERSION="$1"
+  local DOWNLOAD_PATH="$2"
+  local REPO_DOWNLOAD_PATH="$DOWNLOAD_PATH/download"
+  local EXTRACT_DOWNLOAD_PATH="$DOWNLOAD_PATH/src"
+  mkdir -p "$REPO_DOWNLOAD_PATH"
+  mkdir -p "$EXTRACT_DOWNLOAD_PATH"
+  local DOWNLOAD_ARCHIVE="esp-idf-${INSTALL_VERSION}.zip"
+  local DOWNLOAD_URL="https://github.com/espressif/esp-idf/releases/download/${INSTALL_VERSION}/${DOWNLOAD_ARCHIVE}"
+  echo "Downloading from: $DOWNLOAD_URL"
+  echo "Downloading esp-idf source..."
+  wget -c --progress=bar:force:noscroll "$DOWNLOAD_URL" -O "$REPO_DOWNLOAD_PATH/$DOWNLOAD_ARCHIVE" 
+  #if [ "$DOWNLOAD_FAIL" ]; then
+  #  rm -rf "$TMP_DOWNLOAD_DIR"
+  #  fail "Failed to download release"
+  #else
+  #  unzip "$DOWNLOAD_PATH" .
+  #fi
+  echo "Unzipping $REPO_DOWNLOAD_PATH/$DOWNLOAD_ARCHIVE" to "$EXTRACT_DOWNLOAD_PATH"
+  unzip "$REPO_DOWNLOAD_PATH/$DOWNLOAD_ARCHIVE" -d "$EXTRACT_DOWNLOAD_PATH"
+  local REPO_ROOT="$(ls -1 $EXTRACT_DOWNLOAD_PATH)"
+  #REPO_ROOT="$(ls -1 $EXTRACT_DOWNLOAD_PATH/$REPO_ROOT)"
+  echo "Unzipped to $EXTRACT_DOWNLOAD_PATH"
+  ASDF_DOWNLOAD_PATH="$EXTRACT_DOWNLOAD_PATH/$REPO_ROOT"
+}
+
+download_git() {
+  local GIT="$which git)"
+  INSTALL_VERSION=$1
+  DOWNLOAD_PATH="$2"
+  #INSTALL_TAG="$ASDF_INSTALL_VERSION"
+  
+  # Re clone and download for each version, including any submodules (only download the minimum via depth)
+  #"$GIT" clone --depth 1 --recursive --shallow-submodules -b "$VERSION_TAG" git://github.com/espressif/esp-idf.git
+  #"$GIT" clone --recursive -b "$VERSION_TAG" git://github.com/espressif/esp-idf.git
+  #"$GIT" clone --recursive git://github.com/espressif/esp-idf.git
+  #"$GIT" clone git://github.com/espressif/esp-idf.git "$DOWNLOAD_PATH/esp-idf"
+  
+  "$GIT" clone git://github.com/espressif/esp-idf.git "$DOWNLOAD_PATH"
+  cd "$DOWNLOAD_PATH"
+  "$GIT" checkout "$VERSION_TAG"
+  "$GIT" submodule update
+
+  #if [ "$DOWNLOAD_FAIL" ]; then
+  #  fail "asdf-espidf failed to download from git"
+  #fi
+}
+
+# Download routine starts here
+#INSTALL_TYPE="$1"
+#INSTALL_VERSION="$2"
+#DOWNLOAD_PATH="$3"
+
+INSTALL_TYPE="$ASDF_INSTALL_TYPE"
+INSTALL_VERSION="$ASDF_INSTALL_VERSION"
+VERSION_NAME="esp-idf-${INSTALL_VERSION}"
+DOWNLOAD_NAME="$VERSION_NAME.zip"
+#ASDF_DOWNLOAD_PATH="$(mktemp -d -t esp-idf_tmp_XXXXXX)"
+ASDF_DOWNLOAD_PATH="/tmp/$VERSION_NAME"
+mkdir -p $ASDF_DOWNLOAD_PATH
+echo "$ASDF_DOWNLOAD_PATH"
+#ASDF_DOWNLOAD_PATH="$(mktemp -d esp-idf-${INSTALL_VERSION})"
+
+download "$INSTALL_TYPE" "$INSTALL_VERSION" "$ASDF_DOWNLOAD_PATH"
+#download "$INSTALL_TYPE" "$INSTALL_VERSION"
